@@ -15,8 +15,10 @@ const verifyToken = (req, res, next) => {
       });
     }
 
+    const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY
+
     // 3. Verify Token
-    jwt.verify(token, process.env.JWT_SECRET, (err, decoded) => {
+    jwt.verify(token, JWT_SECRET_KEY, (err, decoded) => {
         if (err) {
             return res.status(403).json({ 
                success: false,

@@ -64,10 +64,16 @@ app.get('/api/get-user-person',verifyToken , async (req, res) => {
    
    try{
 
-      const result = await db.query(
-         `SELECT person.id_type, person.cid, person.ppn, person.pwd, person.profession_id, lookup_title.short_value as title, person.firstname , person.lastname FROM "user" LEFT JOIN person ON "user".user_id = person.user_id LEFT JOIN lookup_title ON person.title = lookup_title.title WHERE "user".user_id = $1`
-         , [user_id]
-      )
+      const query = `SELECT 
+      person.id_type, person.cid, person.ppn, person.pwd, person.profession_id, 
+      lookup_title.short_value as title, person.firstname, person.lastname, "user".profile_url
+      FROM "user" 
+      LEFT JOIN person ON "user".user_id = person.user_id 
+      LEFT JOIN lookup_title ON person.title = lookup_title.title 
+      WHERE "user".user_id = $1
+      `;
+
+      const result = await db.query(query, [user_id])
 
       res.status(200).json({
          success: true,
@@ -164,7 +170,7 @@ app.post('/api/select-role', verifyToken, async (req, res) => {
                 hcode: roleData.hcode,
                 health_region: roleData.health_region
             }, 
-            process.env.JWT_SECRET, 
+            jwt_secret_key, 
             { expiresIn: '6h' } // อายุ 6 ชั่วโมง
         );
 
