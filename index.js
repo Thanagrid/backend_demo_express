@@ -13,13 +13,13 @@ const verifyToken = require('./auth');
 app.use(express.json())
 app.use(cookieParser())
 
-const jwt_secret_key = process.env.jwt_secret
+const jwt_secret_key = process.env.JWT_SECRET_KEY
 
 // DB
 const db = new Pool({
   user: 'postgres',
   host: 'localhost',
-  database: 'homeward_dv_2_cloning',
+  database: 'homeward_db_2_cloning',
   password: 'postgres',
   port: 5432,
 })
