@@ -24,6 +24,27 @@ const db = new Pool({
   port: 5432,
 })
 
+// create hash password
+app.post('/api/create/hash-password', async (req, res)=>{
+   const {password} = req.body
+
+   try{
+      const hash = await bcrypt.hash(password, 10)
+      return res.status(200).json({
+         success: true,
+         message: 'สร้าง hash password สำเร็จ',
+         hash: hash
+      })
+   }catch(error){
+      console.error(error);
+      return {
+         success: false,
+         message: 'มีบางอย่างผิดพลาด โปรดลองอีกครั้งในภายหลัง',
+      }
+      
+   }
+})
+
 // LOGIN
 app.post('/api/login', async (req, res) => {
    const {username, password} = req.body
