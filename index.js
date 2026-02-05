@@ -19,7 +19,7 @@ const jwt_secret_key = process.env.JWT_SECRET_KEY
 const db = new Pool({
   user: 'postgres',
   host: 'localhost',
-  database: 'DB-HW-2',
+  database: 'homeward_db_v2_mockup',
   password: 'postgres',
   port: 5432,
 })
@@ -50,7 +50,7 @@ app.post('/api/login', async (req, res) => {
    const {username, password} = req.body
 
    try{
-      const result = await db.query('SELECT * from "user" WHERE username = $1', [username])
+      const result = await db.query('SELECT * from users WHERE username = $1', [username])
       const user = result.rows[0]
       
       const match = await bcrypt.compare(password, user.password)
@@ -87,11 +87,11 @@ app.get('/api/get-user-person',verifyToken , async (req, res) => {
 
       const query = `SELECT 
       person.id_type, person.cid, person.ppn, person.pwd, person.profession_id, 
-      lookup_title.short_value as title, person.firstname, person.lastname, "user".profile_url
-      FROM "user" 
-      LEFT JOIN person ON "user".user_id = person.user_id 
+      lookup_title.short_value as title, person.firstname, person.lastname, users.profile_url
+      FROM users 
+      LEFT JOIN person ON users.user_id = person.user_id 
       LEFT JOIN lookup_title ON person.title = lookup_title.title 
-      WHERE "user".user_id = $1
+      WHERE users.user_id = $1
       `;
 
       const result = await db.query(query, [user_id])
@@ -117,8 +117,16 @@ app.get('/api/get-user-role',verifyToken , async (req, res) => {
 
    try{
 
+      const query = `
+      SELECT roles.role_id, roles.role, roles.hcode, provider.hname, roles.health_region, roles.is_blocked 
+      FROM roles 
+      LEFT JOIN provider ON roles.hcode = provider.hcode 
+      WHERE roles.user_id = $1 
+      ORDER BY roles.created_at ASC
+      `
+
       const result = await db.query(
-         'SELECT role.role_id, role.role, role.hcode, provider.hname, role.health_region, role.is_blocked FROM role LEFT JOIN provider ON role.hcode = provider.hcode WHERE role.user_id = $1 ORDER BY role.created_at ASC'
+         query
          , [user_id]
       )
 
@@ -158,7 +166,7 @@ app.post('/api/select-role', verifyToken, async (req, res) => {
         // และดึงข้อมูลที่จำเป็นมาใส่ใน Token ใหม่เลย (role, hcode, health_region)
         const query = `
             SELECT role_id, role, hcode, health_region
-            FROM "role" 
+            FROM roles 
             WHERE user_id = $1 AND role_id = $2
         `;
         
@@ -279,8 +287,8 @@ app.get('/api/get-all-staff', verifyToken, async (req, res) => {
             u.email
          FROM person p
          LEFT JOIN lookup_title lt ON p.title = lt.title
-         INNER JOIN "role" r ON p.user_id = r.user_id
-         LEFT JOIN "user" u ON p.user_id = u.user_id
+         INNER JOIN roles r ON p.user_id = r.user_id
+         LEFT JOIN users u ON p.user_id = u.user_id
          WHERE r.role::text ~* 'doctor|psychiatrist|pharmacist|nurse|physiotherapist|nutritionist|interdisciplinary|assistant|almoner|social|เภสัช|แพทย์|พยาบาล|สังคม'
          GROUP BY p.user_id, p.cid, lt.short_value, p.firstname, p.lastname, p.phone, p.profession_id, p.medical_expertise, p.created_at, u.email
       `;
